@@ -53,9 +53,23 @@ class Processor:
     ) -> None:
         self._storage = storage
         self._registry = registry
+        self._tick_lock = asyncio.Lock()
 
     async def tick(self) -> dict[str, int]:
-        """Process every silent bot. Returns aggregated stats."""
+        """Process every silent bot. Returns aggregated stats.
+
+        Guarded by an asyncio lock: if a previous tick is still running
+        (e.g. Cloud Scheduler retry after a slow LLM call), the overlapping
+        invocation returns immediately with ``skipped=1`` to avoid
+        double-classification and double-send.
+        """
+        if self._tick_lock.locked():
+            log.info("processor.tick.skipped_concurrent")
+            return {"processed": 0, "prds_sent": 0, "skipped": 1}
+        async with self._tick_lock:
+            return await self._tick_inner()
+
+    async def _tick_inner(self) -> dict[str, int]:
         settings = get_settings()
         threshold = datetime.now(UTC) - timedelta(
             seconds=settings.batch_silence_seconds
@@ -167,6 +181,17 @@ class Processor:
                     error=str(exc),
                 )
             await asyncio.sleep(0.1)  # soft rate-limit
+
+        # If every single send failed (Telegram down, 403 from child bot,
+        # ...) do NOT advance last_read: the batch will be retried on the
+        # next tick, otherwise all PRDs would be silently lost.
+        if sent == 0 and prds:
+            log.error(
+                "processor.send.all_failed",
+                bot_chat_id=bot_cfg.chat_id,
+                n_prds=len(prds),
+            )
+            return 0
 
         # 4. Advance + cleanup
         await self._storage.set_last_read(bot_cfg.chat_id, last_msg_id)
