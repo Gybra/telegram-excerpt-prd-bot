@@ -191,8 +191,27 @@ async def _cmd_add_bot(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
                     allowed_updates=Update.ALL_TYPES,
                 )
         except Exception as exc:  # noqa: BLE001
+            # Roll back: a bot without webhook is useless and would leave
+            # the admin in a half-registered state impossible to re-add.
+            log.warning(
+                "admin.add_bot.webhook_failed_rollback",
+                chat_id=chat_id,
+                error=str(exc),
+            )
+            try:
+                await registry.remove(chat_id)
+            except BotNotFoundError:
+                pass
+            try:
+                await storage.remove_bot(chat_id)
+            except StorageError as rollback_exc:
+                log.error(
+                    "admin.add_bot.rollback_failed",
+                    chat_id=chat_id,
+                    error=str(rollback_exc),
+                )
             await update.effective_message.reply_text(
-                f"⚠️ Bot registrato ma setWebhook fallito: {exc}"
+                f"❌ setWebhook fallito, registrazione annullata: {exc}"
             )
             return
 
