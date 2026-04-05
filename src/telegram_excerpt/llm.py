@@ -252,8 +252,7 @@ async def generate_prds(
         md = str(raw.get("markdown", "")).strip()
         if not md:
             continue
-        trigger_id_raw = raw.get("trigger_message_id")
-        trigger_id = int(trigger_id_raw) if isinstance(trigger_id_raw, int | str) and str(trigger_id_raw).lstrip("-").isdigit() else None
+        trigger_id = _coerce_trigger_id(raw.get("trigger_message_id"))
         trigger_msg = by_id.get(trigger_id) if trigger_id else None
         # Fallback: last message of the batch.
         if trigger_msg is None:
@@ -276,6 +275,20 @@ async def generate_prds(
         chat_title=chat_title,
     )
     return prds
+
+
+def _coerce_trigger_id(raw: Any) -> int | None:
+    """Best-effort coercion of an LLM-returned ``trigger_message_id``.
+
+    The model may emit the id as int or as string. Returns ``None`` if
+    the value cannot be coerced to an integer.
+    """
+    if not isinstance(raw, int | str):
+        return None
+    as_str = str(raw).lstrip("-")
+    if not as_str.isdigit():
+        return None
+    return int(raw)
 
 
 def _safe_json_loads(s: str) -> dict[str, Any]:
