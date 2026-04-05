@@ -21,10 +21,10 @@ convention — fork and adapt as needed.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import CommandHandler, ContextTypes
 
 from telegram_excerpt.config import Mode, get_settings
 from telegram_excerpt.exceptions import (
@@ -37,6 +37,7 @@ from telegram_excerpt.exceptions import (
 from telegram_excerpt.logging_conf import get_logger
 from telegram_excerpt.manager import (
     BotRegistry,
+    PTBApplication,
     make_bot_config,
     validate_token_and_chat,
 )
@@ -326,13 +327,13 @@ async def _cmd_set_n(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
 # ─── Wiring ───────────────────────────────────────────────────────────
 
 
-def build_admin_application(storage: FirestoreStorage, registry: BotRegistry) -> Application:
+def build_admin_application(storage: FirestoreStorage, registry: BotRegistry) -> PTBApplication:
     """Build the admin bot :class:`Application` with registered handlers."""
     settings = get_settings()
     builder = ApplicationBuilder_factory(settings.telegram_admin_bot_token.get_secret_value())
     if settings.mode is Mode.WEBHOOK:
         builder = builder.updater(None)
-    app = builder.build()
+    app: PTBApplication = builder.build()
     app.bot_data[_KEY_STORAGE] = storage
     app.bot_data[_KEY_REGISTRY] = registry
     app.add_handler(CommandHandler("start", _cmd_start))
@@ -344,7 +345,7 @@ def build_admin_application(storage: FirestoreStorage, registry: BotRegistry) ->
     return app
 
 
-def ApplicationBuilder_factory(token: str):  # noqa: ANN201, N802
+def ApplicationBuilder_factory(token: str) -> Any:  # noqa: N802
     """Isolated factory so it can be mocked in tests."""
     from telegram.ext import ApplicationBuilder
 

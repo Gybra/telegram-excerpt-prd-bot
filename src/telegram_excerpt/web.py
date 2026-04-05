@@ -16,7 +16,7 @@ from __future__ import annotations
 import hmac
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Annotated, Any
+from typing import Annotated, Any
 
 from fastapi import FastAPI, Header, HTTPException, Request, status
 from telegram import Update
@@ -24,13 +24,10 @@ from telegram import Update
 from telegram_excerpt.admin import build_admin_application
 from telegram_excerpt.config import get_settings
 from telegram_excerpt.logging_conf import configure_logging, get_logger
-from telegram_excerpt.manager import BotRegistry
+from telegram_excerpt.manager import BotRegistry, PTBApplication
 from telegram_excerpt.models import compute_token_hash
 from telegram_excerpt.processor import Processor
 from telegram_excerpt.storage import FirestoreStorage
-
-if TYPE_CHECKING:
-    from telegram.ext import Application
 
 log = get_logger(__name__)
 
@@ -160,7 +157,7 @@ async def _handle_webhook(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="invalid webhook secret",
             )
-        ptb_app: Application = app.state.admin_app
+        ptb_app: PTBApplication = app.state.admin_app
     else:
         registry: BotRegistry = app.state.registry
         entry = registry.get_by_hash(token_hash)
@@ -175,8 +172,8 @@ async def _handle_webhook(
 
     body = await request.json()
     update = Update.de_json(body, ptb_app.bot)
-    if update is None:
-        log.warning("web.webhook.invalid_update")
+    if update is None:  # defensive: PTB types it non-optional but body is untrusted
+        log.warning("web.webhook.invalid_update")  # type: ignore[unreachable]
         return {"status": "ignored"}
     await ptb_app.process_update(update)
     return {"status": "ok"}
@@ -199,7 +196,7 @@ async def _setup_all_webhooks(app: FastAPI) -> dict[str, Any]:
     base = settings.base_url
 
     registry: BotRegistry = app.state.registry
-    admin_app: Application = app.state.admin_app
+    admin_app: PTBApplication = app.state.admin_app
     admin_hash: str = app.state.admin_token_hash
     admin_secret: str = app.state.admin_webhook_secret
 

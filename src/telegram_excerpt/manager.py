@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from telegram import Update
 from telegram.error import InvalidToken, TelegramError
@@ -44,6 +44,10 @@ if TYPE_CHECKING:
 
 log = get_logger(__name__)
 
+# PTB's Application is generic over 6 type parameters. We never specialize
+# them in this project, so a fully-Any alias keeps annotations readable.
+type PTBApplication = Application[Any, Any, Any, Any, Any, Any]
+
 
 class BotRegistry:
     """In-memory cache of registered bots and their PTB Applications.
@@ -54,7 +58,7 @@ class BotRegistry:
 
     def __init__(self, storage: FirestoreStorage) -> None:
         self._storage = storage
-        self._apps: dict[int, Application] = {}  # key: chat_id
+        self._apps: dict[int, PTBApplication] = {}  # key: chat_id
         self._configs: dict[int, BotConfig] = {}  # key: chat_id
         self._by_hash: dict[str, int] = {}  # token_hash → chat_id
         self._lock = asyncio.Lock()
@@ -137,14 +141,14 @@ class BotRegistry:
         log.info("manager.bot.removed", bot_chat_id=chat_id)
 
     # ─── Lookup ──────────────────────────────────────────────────────
-    def get(self, chat_id: int) -> tuple[BotConfig, Application] | None:
+    def get(self, chat_id: int) -> tuple[BotConfig, PTBApplication] | None:
         cfg = self._configs.get(chat_id)
         app = self._apps.get(chat_id)
         if cfg is None or app is None:
             return None
         return cfg, app
 
-    def get_by_hash(self, token_hash: str) -> tuple[BotConfig, Application] | None:
+    def get_by_hash(self, token_hash: str) -> tuple[BotConfig, PTBApplication] | None:
         chat_id = self._by_hash.get(token_hash)
         if chat_id is None:
             return None
@@ -157,7 +161,7 @@ class BotRegistry:
         return list(self._configs.values())
 
     # ─── Internals ───────────────────────────────────────────────────
-    def _build_application(self, cfg: BotConfig) -> Application:
+    def _build_application(self, cfg: BotConfig) -> PTBApplication:
         """Build a PTB Application for a child bot.
 
         In webhook mode the Updater is not needed: updates arrive via
@@ -191,7 +195,7 @@ class BotRegistry:
         return app
 
     @staticmethod
-    async def _shutdown_app(app: Application, chat_id: int) -> None:
+    async def _shutdown_app(app: PTBApplication, chat_id: int) -> None:
         try:
             if app.updater is not None and app.updater.running:
                 await app.updater.stop()
