@@ -32,7 +32,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.3,<9",
+    "pytest>=8.3,<10",
     "pytest-asyncio>=0.24,<0.26",
     "pytest-cov>=5.0,<7",
     "respx>=0.21,<0.23",
