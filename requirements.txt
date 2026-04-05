@@ -1,7 +1,7 @@
 # Runtime dependencies — mirror di pyproject.toml.
 # Per installazione completa: `pip install -e .[dev]`
 python-telegram-bot>=21.6,<22
-openai>=1.51,<2
+openai>=1.51,<3
 google-cloud-firestore>=2.19,<3
 fastapi>=0.121,<0.136
 starlette>=0.49.1,<0.50  # pin above CVE-2025-62727 (transitive via fastapi)
