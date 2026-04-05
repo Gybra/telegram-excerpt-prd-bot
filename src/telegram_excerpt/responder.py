@@ -27,14 +27,23 @@ log = get_logger(__name__)
 
 _SKIP_TOKEN = "SKIP"
 
+_responder_client: AsyncOpenAI | None = None
+
 
 def build_responder_client() -> AsyncOpenAI:
-    """Build the OpenRouter client for the chat responder."""
-    settings = get_settings()
-    return AsyncOpenAI(
-        base_url=settings.openrouter_base_url,
-        api_key=settings.openrouter_api_key.get_secret_value(),
-    )
+    """Return a process-wide AsyncOpenAI client for the chat responder.
+
+    Cached at module level so that N child bots share a single HTTP
+    connection pool instead of opening N independent ones.
+    """
+    global _responder_client  # noqa: PLW0603
+    if _responder_client is None:
+        settings = get_settings()
+        _responder_client = AsyncOpenAI(
+            base_url=settings.openrouter_base_url,
+            api_key=settings.openrouter_api_key.get_secret_value(),
+        )
+    return _responder_client
 
 
 async def responder_handler(
