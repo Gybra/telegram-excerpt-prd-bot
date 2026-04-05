@@ -68,13 +68,11 @@ class FirestoreStorage:
                     continue
                 try:
                     bots.append(BotConfig.from_firestore(data))
-                except Exception as exc:  # noqa: BLE001
-                    log.warning(
-                        "storage.bot.malformed", chat_id=snap.id, error=str(exc)
-                    )
+                except Exception as exc:
+                    log.warning("storage.bot.malformed", chat_id=snap.id, error=str(exc))
             log.info("storage.bots.loaded", count=len(bots))
             return bots
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise StorageError(f"load_bots failed: {exc}") from exc
 
     async def get_bot(self, chat_id: int) -> BotConfig | None:
@@ -83,7 +81,7 @@ class FirestoreStorage:
             if not snap.exists:
                 return None
             return BotConfig.from_firestore(snap.to_dict() or {})
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise StorageError(f"get_bot({chat_id}) failed: {exc}") from exc
 
     async def add_bot(self, cfg: BotConfig) -> None:
@@ -101,7 +99,7 @@ class FirestoreStorage:
             )
         except StorageError:
             raise
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise StorageError(f"add_bot({cfg.chat_id}) failed: {exc}") from exc
 
     async def remove_bot(self, chat_id: int) -> None:
@@ -112,7 +110,7 @@ class FirestoreStorage:
             await self._delete_buffer_subcollection(chat_id)
             await doc.delete()
             log.info("storage.bot.removed", bot_chat_id=chat_id)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise StorageError(f"remove_bot({chat_id}) failed: {exc}") from exc
 
     async def update_bot(self, chat_id: int, updates: dict[str, Any]) -> None:
@@ -122,7 +120,7 @@ class FirestoreStorage:
         doc = self._bot_doc(chat_id)
         try:
             await doc.update(updates)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise StorageError(f"update_bot({chat_id}) failed: {exc}") from exc
 
     async def set_last_read(self, chat_id: int, message_id: int) -> None:
@@ -152,7 +150,7 @@ class FirestoreStorage:
                 if data is not None:
                     bots.append(BotConfig.from_firestore(data))
             return bots
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise StorageError(f"list_silent_bots failed: {exc}") from exc
 
     # ─── Message buffer ──────────────────────────────────────────────
@@ -176,7 +174,7 @@ class FirestoreStorage:
                 },
             )
             await batch.commit()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise StorageError(
                 f"append_message(chat={msg.chat_id}, msg={msg.message_id}) failed: {exc}"
             ) from exc
@@ -204,7 +202,7 @@ class FirestoreStorage:
                 if data is not None:
                     out.append(BufferedMessage.from_firestore(data))
             return out
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise StorageError(f"fetch_buffer({chat_id}) failed: {exc}") from exc
 
     async def clear_buffer_up_to(self, chat_id: int, message_id: int) -> int:
@@ -234,7 +232,7 @@ class FirestoreStorage:
                 count=len(to_delete),
             )
             return len(to_delete)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise StorageError(
                 f"clear_buffer_up_to({chat_id}, {message_id}) failed: {exc}"
             ) from exc

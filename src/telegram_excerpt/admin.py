@@ -108,7 +108,7 @@ async def _cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     await _cmd_help(update, ctx)
 
 
-async def _cmd_help(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:  # noqa: ARG001
+async def _cmd_help(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     if not _is_authorized(update):
         await _reject(update)
         return
@@ -123,9 +123,7 @@ async def _cmd_add_bot(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     assert update.effective_message is not None
     args = ctx.args or []
     if len(args) < 2:
-        await update.effective_message.reply_text(
-            "Uso: /add_bot <token> <chat_id> [N]"
-        )
+        await update.effective_message.reply_text("Uso: /add_bot <token> <chat_id> [N]")
         return
 
     token = args[0].strip()
@@ -190,7 +188,7 @@ async def _cmd_add_bot(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
                     secret_token=cfg.webhook_secret,
                     allowed_updates=Update.ALL_TYPES,
                 )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             # Roll back: a bot without webhook is useless and would leave
             # the admin in a half-registered state impossible to re-add.
             log.warning(
@@ -249,7 +247,7 @@ async def _cmd_remove_bot(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> Non
         _, app = entry
         try:
             await app.bot.delete_webhook()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             log.warning("admin.delete_webhook.failed", chat_id=chat_id, error=str(exc))
 
     try:
@@ -322,22 +320,16 @@ async def _cmd_set_n(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         await update.effective_message.reply_text(f"❌ Errore persistenza: {exc}")
         return
     cfg.n = n
-    await update.effective_message.reply_text(
-        f"✅ N aggiornato a {n} per chat {chat_id}."
-    )
+    await update.effective_message.reply_text(f"✅ N aggiornato a {n} per chat {chat_id}.")
 
 
 # ─── Wiring ───────────────────────────────────────────────────────────
 
 
-def build_admin_application(
-    storage: FirestoreStorage, registry: BotRegistry
-) -> Application:
+def build_admin_application(storage: FirestoreStorage, registry: BotRegistry) -> Application:
     """Build the admin bot :class:`Application` with registered handlers."""
     settings = get_settings()
-    builder = ApplicationBuilder_factory(
-        settings.telegram_admin_bot_token.get_secret_value()
-    )
+    builder = ApplicationBuilder_factory(settings.telegram_admin_bot_token.get_secret_value())
     if settings.mode is Mode.WEBHOOK:
         builder = builder.updater(None)
     app = builder.build()

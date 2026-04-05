@@ -48,9 +48,7 @@ class Settings(BaseSettings):
     telegram_admin_bot_token: SecretStr = Field(
         ..., description="Admin bot token (command-based management)."
     )
-    forward_chat_id: int = Field(
-        ..., description="Admin's private chat ID (sole PRD recipient)."
-    )
+    forward_chat_id: int = Field(..., description="Admin's private chat ID (sole PRD recipient).")
 
     # ─── LLM (OpenRouter) ────────────────────────────────────────────
     openrouter_api_key: SecretStr = Field(..., description="OpenRouter API key.")
@@ -101,8 +99,7 @@ class Settings(BaseSettings):
     chat_responder_model: str | None = Field(
         default=None,
         description=(
-            "OpenRouter model for the chat responder. Falls back to "
-            "OPENROUTER_MODEL if unset."
+            "OpenRouter model for the chat responder. Falls back to OPENROUTER_MODEL if unset."
         ),
     )
     chat_responder_max_tokens: Annotated[int, Field(ge=16, le=2000)] = 400

@@ -108,7 +108,7 @@ app = create_app()
 
 def _register_routes(app: FastAPI) -> None:
     @app.get("/health")
-    async def health() -> dict[str, str]:  # noqa: RUF029
+    async def health() -> dict[str, str]:
         return {"status": "ok"}
 
     @app.post("/webhook/{token_hash}")
@@ -165,13 +165,9 @@ async def _handle_webhook(
         registry: BotRegistry = app.state.registry
         entry = registry.get_by_hash(token_hash)
         if entry is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="unknown bot"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="unknown bot")
         cfg, ptb_app = entry
-        if secret_header is None or not hmac.compare_digest(
-            secret_header, cfg.webhook_secret
-        ):
+        if secret_header is None or not hmac.compare_digest(secret_header, cfg.webhook_secret):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="invalid webhook secret",
@@ -191,14 +187,10 @@ def _require_bearer(header_value: str | None) -> None:
     assert settings.scheduler_auth_token is not None  # validated in config
     expected = settings.scheduler_auth_token.get_secret_value()
     if not header_value or not header_value.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="missing bearer"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="missing bearer")
     provided = header_value.removeprefix("Bearer ").strip()
     if not hmac.compare_digest(provided, expected):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid bearer"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid bearer")
 
 
 async def _setup_all_webhooks(app: FastAPI) -> dict[str, Any]:
@@ -221,7 +213,7 @@ async def _setup_all_webhooks(app: FastAPI) -> dict[str, Any]:
             allowed_updates=Update.ALL_TYPES,
         )
         results["admin"] = "ok"
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         results["admin"] = f"error: {exc}"
         log.error("web.setup.admin.failed", error=str(exc))
 
@@ -238,10 +230,8 @@ async def _setup_all_webhooks(app: FastAPI) -> dict[str, Any]:
                 allowed_updates=Update.ALL_TYPES,
             )
             results["bots"].append({"chat_id": cfg.chat_id, "status": "ok"})
-        except Exception as exc:  # noqa: BLE001
-            results["bots"].append(
-                {"chat_id": cfg.chat_id, "status": f"error: {exc}"}
-            )
+        except Exception as exc:
+            results["bots"].append({"chat_id": cfg.chat_id, "status": f"error: {exc}"})
             log.error("web.setup.bot.failed", chat_id=cfg.chat_id, error=str(exc))
 
     return results

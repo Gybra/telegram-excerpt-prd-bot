@@ -32,10 +32,10 @@ def main() -> None:
 
 def _run_webhook() -> None:
     """Start uvicorn pointing at ``telegram_excerpt.web:app``."""
-    import uvicorn
-
     # Cloud Run injects the PORT env var.
     import os
+
+    import uvicorn
 
     port = int(os.environ.get("PORT", "8080"))
     uvicorn.run(
@@ -91,7 +91,7 @@ async def _run_polling() -> None:
         while not stop_event.is_set():
             try:
                 await processor.tick()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 log.exception("main.tick.failed", error=str(exc))
             try:
                 await asyncio.wait_for(

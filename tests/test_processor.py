@@ -55,7 +55,7 @@ class FakeRegistry:
         self._app = MagicMock()
         self._app.bot = self.bot
 
-    def get(self, chat_id: int) -> tuple[Any, Any]:  # noqa: ARG002
+    def get(self, chat_id: int) -> tuple[Any, Any]:
         return (None, self._app)
 
 

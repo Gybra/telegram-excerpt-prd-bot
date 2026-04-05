@@ -46,9 +46,7 @@ def build_responder_client() -> AsyncOpenAI:
     return _responder_client
 
 
-async def responder_handler(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def responder_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Reply to a group message via the LLM (if the model doesn't skip).
 
     Reads the AsyncOpenAI client from ``context.bot_data["responder_client"]``
@@ -95,6 +93,4 @@ async def responder_handler(
     try:
         await msg.reply_text(reply)
     except TelegramError as exc:
-        log.warning(
-            "responder.reply.failed", message_id=msg.message_id, error=str(exc)
-        )
+        log.warning("responder.reply.failed", message_id=msg.message_id, error=str(exc))

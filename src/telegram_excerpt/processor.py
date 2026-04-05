@@ -71,9 +71,7 @@ class Processor:
 
     async def _tick_inner(self) -> dict[str, int]:
         settings = get_settings()
-        threshold = datetime.now(UTC) - timedelta(
-            seconds=settings.batch_silence_seconds
-        )
+        threshold = datetime.now(UTC) - timedelta(seconds=settings.batch_silence_seconds)
         try:
             silent = await self._storage.list_silent_bots(threshold)
         except StorageError as exc:
@@ -85,7 +83,7 @@ class Processor:
         for bot_cfg in silent:
             try:
                 sent = await self.flush_if_silent(bot_cfg)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 log.exception(
                     "processor.flush.failed",
                     bot_chat_id=bot_cfg.chat_id,
@@ -111,9 +109,7 @@ class Processor:
         if not messages:
             # Nothing to do — reset the flag.
             await self._storage.update_bot(bot_cfg.chat_id, {"has_pending": False})
-            log.debug(
-                "processor.flush.no_messages", bot_chat_id=bot_cfg.chat_id
-            )
+            log.debug("processor.flush.no_messages", bot_chat_id=bot_cfg.chat_id)
             return 0
 
         log.info(
@@ -160,9 +156,7 @@ class Processor:
             return 0
 
         if not prds:
-            log.warning(
-                "processor.generate.empty", bot_chat_id=bot_cfg.chat_id
-            )
+            log.warning("processor.generate.empty", bot_chat_id=bot_cfg.chat_id)
             await self._storage.set_last_read(bot_cfg.chat_id, last_msg_id)
             await self._storage.clear_buffer_up_to(bot_cfg.chat_id, last_msg_id)
             return 0
@@ -212,22 +206,14 @@ class Processor:
         # Telegram API returns 403 Forbidden.
         entry = self._registry.get(bot_cfg.chat_id)
         if entry is None:
-            log.error(
-                "processor.send.no_bot_in_registry", bot_chat_id=bot_cfg.chat_id
-            )
-            raise RuntimeError(
-                f"bot {bot_cfg.chat_id} missing from registry during send"
-            )
+            log.error("processor.send.no_bot_in_registry", bot_chat_id=bot_cfg.chat_id)
+            raise RuntimeError(f"bot {bot_cfg.chat_id} missing from registry during send")
         _, app = entry
 
         buf = io.BytesIO(prd.markdown.encode("utf-8"))
         buf.seek(0)
         document = InputFile(buf, filename=prd.filename())
-        ts_str = (
-            prd.trigger_ts.astimezone().strftime("%Y-%m-%d %H:%M")
-            if prd.trigger_ts
-            else "N/A"
-        )
+        ts_str = prd.trigger_ts.astimezone().strftime("%Y-%m-%d %H:%M") if prd.trigger_ts else "N/A"
         caption = (
             f"📨 PRD — {prd.title}\n"
             f"👤 Autore: {prd.trigger_user}\n"

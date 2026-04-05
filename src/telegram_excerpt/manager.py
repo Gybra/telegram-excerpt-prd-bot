@@ -106,9 +106,7 @@ class BotRegistry:
         """
         async with self._lock:
             if cfg.chat_id in self._apps:
-                raise BotAlreadyRegisteredError(
-                    f"bot for chat {cfg.chat_id} already registered"
-                )
+                raise BotAlreadyRegisteredError(f"bot for chat {cfg.chat_id} already registered")
             app = self._build_application(cfg)
             await app.initialize()
             await app.start()
@@ -200,16 +198,14 @@ class BotRegistry:
             if app.running:
                 await app.stop()
             await app.shutdown()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             log.warning("manager.shutdown.failed", bot_chat_id=chat_id, error=str(exc))
 
 
 # ─── Handler ──────────────────────────────────────────────────────────
 
 
-async def _buffer_message_handler(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def _buffer_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Generic handler for child bots: buffer every text message."""
     msg = update.effective_message
     if msg is None or msg.text is None:
@@ -264,9 +260,7 @@ async def validate_token_and_chat(token: str, chat_id: int) -> str:
     except InvalidToken as exc:
         raise InvalidTokenError(f"invalid telegram token: {exc}") from exc
     except TelegramError as exc:
-        raise InvalidChatError(
-            f"bot cannot access chat {chat_id}: {exc}"
-        ) from exc
+        raise InvalidChatError(f"bot cannot access chat {chat_id}: {exc}") from exc
     return chat.title or chat.full_name or str(chat_id)
 
 

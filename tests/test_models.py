@@ -41,9 +41,7 @@ def test_bot_config_repr_does_not_leak_token() -> None:
 
 
 def test_bot_config_redacted_token() -> None:
-    cfg = BotConfig(
-        token="x", token_hash="abcdef1234567890", chat_id=-100, n=10
-    )
+    cfg = BotConfig(token="x", token_hash="abcdef1234567890", chat_id=-100, n=10)
     assert "abcdef12" in cfg.redacted_token()
     assert "abcdef1234567890" not in cfg.redacted_token()
 
@@ -54,7 +52,7 @@ def test_prd_filename_sanitization() -> None:
     assert fname.endswith(".md")
     assert fname.startswith("PRD_")
     # no slashes or illegal chars
-    for bad in "/\\:*?\"<>|":
+    for bad in '/\\:*?"<>|':
         assert bad not in fname
 
 
