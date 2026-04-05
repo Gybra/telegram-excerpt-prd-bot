@@ -1,0 +1,11 @@
+services:
+  bot:
+    build: .
+    env_file: .env
+    environment:
+      MODE: polling
+    volumes:
+      # Service account GCP (read-only). File must match
+      # GOOGLE_APPLICATION_CREDENTIALS in .env.
+      - ./secrets:/app/secrets:ro
+    restart: unless-stopped

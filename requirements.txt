@@ -1,0 +1,12 @@
+# Runtime dependencies — mirror di pyproject.toml.
+# Per installazione completa: `pip install -e .[dev]`
+python-telegram-bot>=21.6,<22
+openai>=1.51,<2
+google-cloud-firestore>=2.19,<3
+fastapi>=0.115,<0.120
+uvicorn[standard]>=0.32,<0.40
+httpx>=0.27,<0.29
+pydantic>=2.9,<3
+pydantic-settings>=2.6,<3
+structlog>=24.4,<26
+python-dotenv>=1.0,<2
