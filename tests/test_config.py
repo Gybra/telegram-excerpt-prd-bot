@@ -56,7 +56,7 @@ def test_webhook_mode_ok(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_default_n_bounds(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DEFAULT_N", "0")
     get_settings.cache_clear()
-    with pytest.raises(ValueError, match="DEFAULT_N"):
+    with pytest.raises(ValueError, match="(?i)default_n"):
         get_settings()
     monkeypatch.setenv("DEFAULT_N", "50")
     get_settings.cache_clear()
