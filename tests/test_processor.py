@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from telegram.error import TelegramError
 
 from telegram_excerpt.models import BotConfig, BufferedMessage, ClassifyResult, PRDDoc
 from telegram_excerpt.processor import Processor
@@ -199,6 +201,69 @@ async def test_flush_empty_prds_still_advances(
         sent = await proc.flush_if_silent(cfg)
     assert sent == 0
     assert fake_storage.last_read[-100] == 5
+
+
+async def test_flush_all_sends_fail_preserves_batch(
+    fake_storage: FakeStorage,
+    fake_registry: FakeRegistry,
+    bot_cfg_factory: Callable[..., BotConfig],
+) -> None:
+    """If every send_document raises, last_read must NOT advance."""
+    fake_storage.buffer[-100] = [_msg(1), _msg(2)]
+    cfg = bot_cfg_factory()
+    proc = Processor(storage=fake_storage, registry=fake_registry)  # type: ignore[arg-type]
+    fake_registry.bot.send_document.side_effect = TelegramError("boom")
+
+    prds = [
+        PRDDoc(
+            title="A",
+            markdown="body",
+            trigger_message_id=1,
+            trigger_user="Mario",
+            trigger_ts=datetime(2026, 4, 5, 10, 1, tzinfo=UTC),
+        ),
+    ]
+    with (
+        patch(
+            "telegram_excerpt.processor.classify_batch",
+            new=AsyncMock(return_value=ClassifyResult(needs_prd=True)),
+        ),
+        patch(
+            "telegram_excerpt.processor.generate_prds",
+            new=AsyncMock(return_value=prds),
+        ),
+    ):
+        sent = await proc.flush_if_silent(cfg)
+
+    assert sent == 0
+    # last_read NOT advanced → retry at next tick
+    assert -100 not in fake_storage.last_read
+    assert fake_storage.cleared == []
+
+
+async def test_tick_lock_skips_concurrent_invocation(
+    fake_storage: FakeStorage,
+    fake_registry: FakeRegistry,
+) -> None:
+    """A second tick() while the first is running returns skipped=1."""
+    proc = Processor(storage=fake_storage, registry=fake_registry)  # type: ignore[arg-type]
+
+    # Block the inner tick on an event so we can overlap two calls.
+    gate = asyncio.Event()
+
+    async def _blocking_inner() -> dict[str, int]:
+        await gate.wait()
+        return {"processed": 0, "prds_sent": 0}
+
+    with patch.object(proc, "_tick_inner", new=_blocking_inner):
+        first = asyncio.create_task(proc.tick())
+        # Give the first call time to acquire the lock.
+        await asyncio.sleep(0)
+        second = await proc.tick()
+        assert second.get("skipped") == 1
+        gate.set()
+        result = await first
+        assert "skipped" not in result
 
 
 async def test_flush_respects_last_read(
