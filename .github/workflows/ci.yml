@@ -63,7 +63,7 @@ jobs:
           pip install pip-audit
 
       - name: Audit dependencies
-        run: pip-audit --disable-pip -r requirements.txt
+        run: pip-audit -r requirements.txt
 
   docker-build:
     runs-on: ubuntu-latest
