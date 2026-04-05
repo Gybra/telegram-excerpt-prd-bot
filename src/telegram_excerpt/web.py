@@ -13,6 +13,7 @@ Exposed publicly on Cloud Run. Endpoints:
 
 from __future__ import annotations
 
+import hmac
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Annotated, Any
@@ -151,8 +152,10 @@ async def _handle_webhook(
     secret_header: str | None,
 ) -> dict[str, str]:
     # Admin?
-    if token_hash == app.state.admin_token_hash:
-        if secret_header != app.state.admin_webhook_secret:
+    if hmac.compare_digest(token_hash, app.state.admin_token_hash):
+        if secret_header is None or not hmac.compare_digest(
+            secret_header, app.state.admin_webhook_secret
+        ):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="invalid webhook secret",
@@ -166,7 +169,9 @@ async def _handle_webhook(
                 status_code=status.HTTP_404_NOT_FOUND, detail="unknown bot"
             )
         cfg, ptb_app = entry
-        if secret_header != cfg.webhook_secret:
+        if secret_header is None or not hmac.compare_digest(
+            secret_header, cfg.webhook_secret
+        ):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="invalid webhook secret",
@@ -190,7 +195,7 @@ def _require_bearer(header_value: str | None) -> None:
             status_code=status.HTTP_401_UNAUTHORIZED, detail="missing bearer"
         )
     provided = header_value.removeprefix("Bearer ").strip()
-    if provided != expected:
+    if not hmac.compare_digest(provided, expected):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid bearer"
         )
