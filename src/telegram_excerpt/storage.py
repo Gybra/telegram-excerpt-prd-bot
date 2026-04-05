@@ -15,7 +15,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from google.cloud import firestore  # type: ignore[attr-defined]
+from google.cloud import firestore
 from google.cloud.firestore_v1 import AsyncClient
 from google.cloud.firestore_v1.async_collection import AsyncCollectionReference
 from google.cloud.firestore_v1.async_document import AsyncDocumentReference
@@ -48,14 +48,14 @@ class FirestoreStorage:
 
     async def close(self) -> None:
         """Close the Firestore client (to be called at shutdown)."""
-        await self._client.close()
+        await self._client.close()  # type: ignore[no-untyped-call]
 
     # ─── Bot registry ────────────────────────────────────────────────
     def _bot_doc(self, chat_id: int) -> AsyncDocumentReference:
         return self._client.collection(_BOTS_COLLECTION).document(str(chat_id))
 
     def _buffer_coll(self, chat_id: int) -> AsyncCollectionReference:
-        return self._bot_doc(chat_id).collection(_BUFFER_SUBCOLLECTION)
+        return self._bot_doc(chat_id).collection(_BUFFER_SUBCOLLECTION)  # type: ignore[no-any-return]
 
     async def load_bots(self) -> list[BotConfig]:
         """Load all bots (including disabled ones) from the registry."""
@@ -217,7 +217,7 @@ class FirestoreStorage:
             )
             to_delete: list[AsyncDocumentReference] = []
             async for snap in query.stream():
-                to_delete.append(snap.reference)
+                to_delete.append(snap.reference)  # type: ignore[arg-type]
             if not to_delete:
                 return 0
             # Batch of max 500 operations.
@@ -248,7 +248,7 @@ class FirestoreStorage:
     async def _delete_buffer_subcollection(self, chat_id: int) -> None:
         refs: list[AsyncDocumentReference] = []
         async for snap in self._buffer_coll(chat_id).stream():
-            refs.append(snap.reference)
+            refs.append(snap.reference)  # type: ignore[arg-type]
         for chunk in _chunks(refs, 400):
             batch = self._client.batch()
             for ref in chunk:

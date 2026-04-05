@@ -118,7 +118,7 @@ warn_unreachable = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["google.cloud.firestore", "google.cloud.firestore_v1.*"]
+module = ["google.cloud.firestore", "google.cloud.firestore_v1.*", "uvicorn"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

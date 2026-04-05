@@ -129,4 +129,4 @@ def get_settings() -> Settings:
     The cache guarantees that env is read only once per process. In tests
     call ``get_settings.cache_clear()`` to force a reload.
     """
-    return Settings()  # type: ignore[call-arg]
+    return Settings()
