@@ -170,22 +170,13 @@ async def test_tasks_process_wrong_bearer(client: AsyncClient) -> None:
     assert resp.status_code == 401
 
 
-async def test_tasks_process_ok(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_tasks_process_ok(client: AsyncClient) -> None:
     """Valid bearer → tick() called, result returned."""
-    monkeypatch.setenv("MODE", "webhook")
-    monkeypatch.setenv("BASE_URL", "https://example.run.app")
-    monkeypatch.setenv("SCHEDULER_AUTH_TOKEN", "s" * 32)
-    from telegram_excerpt.config import get_settings
-
-    get_settings.cache_clear()
-
-    app = _build_test_app()
-    transport = ASGITransport(app=app)  # type: ignore[arg-type]
-    async with AsyncClient(transport=transport, base_url="http://test") as c:
-        resp = await c.post(
-            "/tasks/process",
-            headers={"Authorization": f"Bearer {'s' * 32}"},
-        )
+    token = "t" * 32  # matches SCHEDULER_AUTH_TOKEN from conftest
+    resp = await client.post(
+        "/tasks/process",
+        headers={"Authorization": f"Bearer {token}"},
+    )
     assert resp.status_code == 200
     assert "processed" in resp.json()
 

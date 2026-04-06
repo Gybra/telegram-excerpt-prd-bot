@@ -24,6 +24,7 @@ _TEST_ENV = {
     "MODE": "polling",
     "BATCH_SILENCE_SECONDS": "180",
     "DEFAULT_N": "50",
+    "SCHEDULER_AUTH_TOKEN": "t" * 32,
 }
 for k, v in _TEST_ENV.items():
     os.environ[k] = v
