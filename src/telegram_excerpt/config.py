@@ -103,6 +103,18 @@ class Settings(BaseSettings):
         ),
     )
     chat_responder_max_tokens: Annotated[int, Field(ge=16, le=2000)] = 400
+    chat_responder_rate_limit: Annotated[int, Field(ge=1, le=1000)] = Field(
+        default=5,
+        description="Max responder replies per user per rate-limit window.",
+    )
+    chat_responder_rate_window_seconds: Annotated[int, Field(ge=10, le=86400)] = Field(
+        default=60,
+        description="Rate-limit window in seconds (per user).",
+    )
+    chat_responder_daily_budget: Annotated[int, Field(ge=0, le=100000)] = Field(
+        default=500,
+        description="Max responder LLM calls per day (0 = unlimited).",
+    )
 
     @field_validator("base_url")
     @classmethod

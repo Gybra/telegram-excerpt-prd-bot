@@ -80,33 +80,24 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         log.info("web.lifespan.stopped")
 
 
-# ─── App factory ──────────────────────────────────────────────────────
-
-
-def create_app() -> FastAPI:
-    """FastAPI app factory (useful in tests)."""
-    app = FastAPI(
-        title="telegram-excerpt",
-        version="0.1.0",
-        lifespan=lifespan,
-        docs_url=None,
-        redoc_url=None,
-        openapi_url=None,
-    )
-    _register_routes(app)
-    return app
-
-
-app = create_app()
-
-
 # ─── Routes ───────────────────────────────────────────────────────────
 
 
 def _register_routes(app: FastAPI) -> None:
     @app.get("/health")
-    async def health() -> dict[str, str]:
-        return {"status": "ok"}
+    async def health() -> dict[str, Any]:
+        result: dict[str, Any] = {"status": "ok"}
+        storage: FirestoreStorage | None = getattr(app.state, "storage", None)
+        if storage is not None:
+            try:
+                # Lightweight Firestore ping: list bots collection with limit 1
+                async for _ in storage._client.collection("bots").limit(1).stream():
+                    pass
+                result["firestore"] = "ok"
+            except Exception as exc:
+                result["firestore"] = f"error: {exc}"
+                result["status"] = "degraded"
+        return result
 
     @app.post("/webhook/{token_hash}")
     async def webhook(
@@ -136,6 +127,26 @@ def _register_routes(app: FastAPI) -> None:
     ) -> dict[str, Any]:
         _require_bearer(authorization)
         return await _setup_all_webhooks(app)
+
+
+# ─── App factory ──────────────────────────────────────────────────────
+
+
+def create_app() -> FastAPI:
+    """FastAPI app factory (useful in tests)."""
+    app = FastAPI(
+        title="telegram-excerpt",
+        version="0.1.0",
+        lifespan=lifespan,
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
+    )
+    _register_routes(app)
+    return app
+
+
+app = create_app()
 
 
 # ─── Handlers ─────────────────────────────────────────────────────────
