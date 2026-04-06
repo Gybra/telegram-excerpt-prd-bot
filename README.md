@@ -110,6 +110,9 @@ The architecture is designed to stay within the **GCP free tier**
 | `CHAT_RESPONDER_SYSTEM_PROMPT`   |              | (Italian default)                | Custom system prompt for the responder (keep the `SKIP` instruction).   |
 | `CHAT_RESPONDER_MODEL`           |              | falls back to `OPENROUTER_MODEL` | OpenRouter model used by the responder.                                 |
 | `CHAT_RESPONDER_MAX_TOKENS`      |              | `400`                            | Max tokens per responder reply.                                         |
+| `CHAT_RESPONDER_RATE_LIMIT`      |              | `5`                              | Max responder replies per user per rate window.                          |
+| `CHAT_RESPONDER_RATE_WINDOW_SECONDS` |          | `60`                             | Rate-limit sliding window in seconds (per user).                        |
+| `CHAT_RESPONDER_DAILY_BUDGET`    |              | `500`                            | Max responder LLM calls per day (0 = unlimited).                        |
 
 ## Admin commands
 

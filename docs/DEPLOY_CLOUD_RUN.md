@@ -117,6 +117,9 @@ gcloud run services update telegram-excerpt \
 
 ## 5. Cloud Scheduler
 
+If you used `--allow-unauthenticated` in step 4, the scheduler only
+needs the application-level bearer token:
+
 ```bash
 SCHEDULER_TOKEN=$(gcloud secrets versions access latest --secret=scheduler-auth-token)
 
@@ -126,6 +129,29 @@ gcloud scheduler jobs create http telegram-excerpt-flush \
     --uri="$BASE_URL/tasks/process" \
     --http-method=POST \
     --headers="Authorization=Bearer $SCHEDULER_TOKEN" \
+    --attempt-deadline=60s
+```
+
+If instead you kept `--no-allow-unauthenticated`, the scheduler must
+also present an OIDC token so Cloud Run lets the request through.
+Grant the invoker role and add `--oidc-service-account-email`:
+
+```bash
+# Grant Cloud Scheduler permission to invoke the service
+gcloud run services add-iam-policy-binding telegram-excerpt \
+    --region=$REGION \
+    --member="serviceAccount:telegram-excerpt-app@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/run.invoker"
+
+SCHEDULER_TOKEN=$(gcloud secrets versions access latest --secret=scheduler-auth-token)
+
+gcloud scheduler jobs create http telegram-excerpt-flush \
+    --location=$REGION \
+    --schedule="* * * * *" \
+    --uri="$BASE_URL/tasks/process" \
+    --http-method=POST \
+    --headers="Authorization=Bearer $SCHEDULER_TOKEN" \
+    --oidc-service-account-email="telegram-excerpt-app@$PROJECT_ID.iam.gserviceaccount.com" \
     --attempt-deadline=60s
 ```
 
@@ -167,5 +193,5 @@ real-time consumption.
 ```bash
 gcloud run services delete telegram-excerpt --region=$REGION
 gcloud scheduler jobs delete telegram-excerpt-flush --location=$REGION
-gcloud firestore databases delete --database='(default)'  # CAREFUL
+gcloud firestore databases delete --database='(default)' --location=$REGION  # CAREFUL
 ```
