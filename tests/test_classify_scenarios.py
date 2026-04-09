@@ -20,7 +20,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from dotenv import dotenv_values
 
-from telegram_excerpt.llm import classify_batch
+from telegram_excerpt.llm import _CLASSIFY_SYSTEM_PROMPT, classify_batch
 from telegram_excerpt.models import BufferedMessage
 
 # ── Real .env values for live LLM tests ─────────────────────────────────
@@ -514,6 +514,16 @@ async def test_classify_scenario_mock(
     client = _fake_client(needs_prd=expected)
     result = await classify_batch(msgs, client=client)
     assert result.needs_prd is expected
+
+    # Verify the pipeline built the correct API call
+    call_kwargs = client.chat.completions.create.call_args
+    api_messages = call_kwargs.kwargs["messages"]
+    assert api_messages[0]["role"] == "system"
+    assert api_messages[0]["content"] == _CLASSIFY_SYSTEM_PROMPT
+    assert api_messages[1]["role"] == "user"
+    for raw in messages_raw:
+        assert raw["user_name"] in api_messages[1]["content"]
+        assert raw["text"] in api_messages[1]["content"]
 
 
 # ── Live LLM tests (opt-in: pytest -m llm) ─────────────────────────────

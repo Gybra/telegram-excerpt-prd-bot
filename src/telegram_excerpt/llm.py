@@ -183,7 +183,7 @@ async def classify_batch(
             temperature=0.0,
         )
     except APIError as exc:
-        raise LLMClassificationError(f"OpenRouter API error: {exc}") from exc
+        raise LLMClassificationError(f"LLM API error: {exc}") from exc
 
     if not response.choices:
         raise LLMClassificationError("empty choices from LLM")
@@ -246,7 +246,7 @@ async def generate_prds(
             temperature=0.2,
         )
     except APIError as exc:
-        raise LLMGenerationError(f"OpenRouter API error: {exc}") from exc
+        raise LLMGenerationError(f"LLM API error: {exc}") from exc
 
     if not response.choices:
         raise LLMGenerationError("empty choices from LLM")
