@@ -51,7 +51,7 @@ def _restore_real_env_for_llm(
     real_env = _load_real_env()
     saved = {k: os.environ.get(k) for k in _LLM_ENV_KEYS}
     for k in _LLM_ENV_KEYS:
-        if k in real_env:
+        if k in real_env and real_env[k] is not None:
             os.environ[k] = real_env[k]
 
     from telegram_excerpt.config import get_settings
