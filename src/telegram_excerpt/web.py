@@ -206,7 +206,8 @@ async def _setup_all_webhooks(app: FastAPI) -> dict[str, Any]:
     if not settings.base_url:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="BASE_URL env var is not set — update the Cloud Run service with the assigned URL first.",
+            detail="BASE_URL env var is not set — update the Cloud Run service"
+            " with the assigned URL first.",
         )
     base = settings.base_url
 
