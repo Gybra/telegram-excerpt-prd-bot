@@ -116,7 +116,12 @@ class Settings(BaseSettings):
         description="Max responder LLM calls per day (0 = unlimited).",
     )
 
-    @field_validator("scheduler_auth_token", "telegram_admin_bot_token", "openrouter_api_key", mode="before")
+    @field_validator(
+        "scheduler_auth_token",
+        "telegram_admin_bot_token",
+        "openrouter_api_key",
+        mode="before",
+    )
     @classmethod
     def _strip_secret_whitespace(cls, v: str | SecretStr | None) -> str | SecretStr | None:
         """Cloud Run may inject secrets with trailing newlines."""
