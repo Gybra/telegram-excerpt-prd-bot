@@ -84,7 +84,7 @@ gcloud run deploy telegram-excerpt \
     --min-instances=0 \
     --max-instances=3 \
     --timeout=120 \
-    --set-env-vars="MODE=webhook,FIRESTORE_PROJECT_ID=$PROJECT_ID,GOOGLE_APPLICATION_CREDENTIALS=/secrets/firebase.json,FORWARD_CHAT_ID=<your-user-id>,OPENROUTER_MODEL=qwen/qwen3.6-plus:free,BATCH_SILENCE_SECONDS=180,DEFAULT_N=50" \
+    --set-env-vars="MODE=webhook,FIRESTORE_PROJECT_ID=$PROJECT_ID,GOOGLE_APPLICATION_CREDENTIALS=/secrets/firebase.json,FORWARD_CHAT_ID=<your-user-id>,OPENROUTER_MODEL=moonshotai/kimi-k2-instruct,OPENROUTER_BASE_URL=https://api.groq.com/openai/v1,BATCH_SILENCE_SECONDS=180,DEFAULT_N=50" \
     --set-secrets="TELEGRAM_ADMIN_BOT_TOKEN=telegram-admin-token:latest,OPENROUTER_API_KEY=openrouter-key:latest,SCHEDULER_AUTH_TOKEN=scheduler-auth-token:latest,/secrets/firebase.json=firebase-json:latest"
 ```
 
