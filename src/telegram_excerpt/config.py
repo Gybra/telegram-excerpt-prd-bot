@@ -116,6 +116,17 @@ class Settings(BaseSettings):
         description="Max responder LLM calls per day (0 = unlimited).",
     )
 
+    @field_validator("scheduler_auth_token", "telegram_admin_bot_token", "openrouter_api_key", mode="before")
+    @classmethod
+    def _strip_secret_whitespace(cls, v: str | SecretStr | None) -> str | SecretStr | None:
+        """Cloud Run may inject secrets with trailing newlines."""
+        if isinstance(v, str):
+            return v.strip()
+        if isinstance(v, SecretStr):
+            stripped = v.get_secret_value().strip()
+            return SecretStr(stripped) if stripped else v
+        return v
+
     @field_validator("base_url")
     @classmethod
     def _strip_trailing_slash(cls, v: str | None) -> str | None:
@@ -123,11 +134,14 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _validate_webhook_requirements(self) -> Settings:
-        """Webhook mode requires base_url and scheduler_auth_token."""
+        """Webhook mode requires scheduler_auth_token at startup.
+
+        ``base_url`` is only needed when ``/admin/setup`` is called, so it
+        is validated lazily there instead of blocking container startup
+        (Cloud Run assigns the URL *after* the first deploy).
+        """
         if self.mode is Mode.WEBHOOK:
-            if not self.base_url:
-                raise ValueError("BASE_URL is required when MODE=webhook")
-            if not self.base_url.startswith("https://"):
+            if self.base_url and not self.base_url.startswith("https://"):
                 raise ValueError("BASE_URL must be https:// for Telegram webhooks")
             if not self.scheduler_auth_token:
                 raise ValueError("SCHEDULER_AUTH_TOKEN is required when MODE=webhook")
