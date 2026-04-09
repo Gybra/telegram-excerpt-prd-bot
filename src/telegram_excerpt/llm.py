@@ -50,8 +50,26 @@ Rispondi ESCLUSIVAMENTE con JSON valido nella forma:
 Regole:
 - needs_prd=true solo se c'è contenuto concreto e azionabile
   (bug, richiesta feature, miglioramento, domanda tecnica rilevante).
-- needs_prd=false per saluti, chitchat, meme, conferme, messaggi vuoti,
-  off-topic, o conversazioni puramente informative senza azione richiesta.
+  Un bug report è SEMPRE azionabile e merita un PRD, anche se la causa
+  è già stata identificata: il PRD serve a tracciare requisiti di fix,
+  criteri di accettazione e verifica. Anche segnalazioni di problemi
+  vaghe (es. "il sistema è lento", "non funziona bene") sono azionabili
+  se confermate da più persone, perché indicano un problema reale che
+  richiede indagine.
+- needs_prd=true anche per suggerimenti o desideri espressi con linguaggio
+  soft ("sarebbe bello se...", "mi piacerebbe...", "si potrebbe..."),
+  purché descrivano una funzionalità o modifica concreta e identificabile.
+- needs_prd=false per saluti, chitchat, meme, battute, ironia tra
+  colleghi, conferme, messaggi vuoti, off-topic, o conversazioni
+  puramente informative senza azione richiesta. Emoji come 😂 e
+  sticker sono forti indicatori di tono scherzoso.
+- needs_prd=false se la conversazione si limita a riferire un problema
+  già tracciato in un sistema esterno (es. "ho aperto un ticket su Jira")
+  senza aggiungere nuovi requisiti o dettagli non presenti nel ticket.
+- needs_prd=false se una domanda tecnica viene posta e risolta
+  completamente nella stessa conversazione (l'autore conferma di aver
+  capito, es. "ah ok", "chiaro, grazie") senza richiedere modifiche
+  al codice o al sistema.
 """
 
 _GENERATE_SYSTEM_PROMPT = """\

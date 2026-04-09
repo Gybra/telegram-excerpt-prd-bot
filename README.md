@@ -98,7 +98,8 @@ The architecture is designed to stay within the **GCP free tier**
 | `TELEGRAM_ADMIN_BOT_TOKEN`       | ✓            | —                                | Admin bot token.                                                        |
 | `FORWARD_CHAT_ID`                | ✓            | —                                | Admin's private chat ID (sole PRD recipient).                           |
 | `OPENROUTER_API_KEY`             | ✓            | —                                | OpenRouter API key.                                                     |
-| `OPENROUTER_MODEL`               |              | `qwen/qwen3.6-plus:free`         | OpenRouter model id.                                                    |
+| `OPENROUTER_MODEL`               |              | `qwen/qwen3.6-plus:free`         | LLM model id (OpenRouter or compatible API).                            |
+| `OPENROUTER_BASE_URL`            |              | `https://openrouter.ai/api/v1`   | Base URL for the LLM API (change for Groq, etc).                        |
 | `GOOGLE_APPLICATION_CREDENTIALS` | ✓            | —                                | Path to the service-account JSON.                                       |
 | `FIRESTORE_PROJECT_ID`           | ✓            | —                                | GCP project ID.                                                         |
 | `MODE`                           |              | `polling`                        | `polling` (dev) or `webhook` (Cloud Run).                               |
@@ -131,8 +132,26 @@ pip install -e ".[dev]"
 ruff check src tests
 ruff format src tests
 mypy src
-pytest
+pytest                              # mock tests only (CI-safe)
+pytest -m llm                       # run LLM classification tests against real API
+pytest -m llm -k edge               # run only edge-case scenarios
 ```
+
+### Classification prompt evaluation
+
+The file `tests/test_classify_scenarios.py` contains 22 realistic
+conversation scenarios (8 actionable, 7 non-actionable, 7 edge cases)
+used to evaluate and tune the classification prompt in
+`src/telegram_excerpt/llm.py`.
+
+- **Mock tests** (`pytest`) run by default in CI — they verify the
+  parsing pipeline, not the prompt quality.
+- **LLM tests** (`pytest -m llm`) call the real LLM API and verify that
+  the prompt classifies each scenario correctly. Requires a valid
+  `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` in `.env`.
+
+To iterate on the prompt: edit `_CLASSIFY_SYSTEM_PROMPT` in `llm.py`,
+then run `pytest -m llm -v` and check which scenarios pass or fail.
 
 ## Optional: chat responder
 
