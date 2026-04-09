@@ -15,12 +15,16 @@ def test_polling_mode_loads() -> None:
     assert s.forward_chat_id == 999
 
 
-def test_webhook_mode_requires_base_url(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_webhook_mode_starts_without_base_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    """BASE_URL is optional at startup — only required when /admin/setup runs."""
     monkeypatch.setenv("MODE", "webhook")
+    monkeypatch.setenv("SCHEDULER_AUTH_TOKEN", "x" * 32)
     monkeypatch.delenv("BASE_URL", raising=False)
     get_settings.cache_clear()
-    with pytest.raises(ValueError, match="BASE_URL"):
-        get_settings()
+    s = get_settings()
+    assert s.mode is Mode.WEBHOOK
+    # base_url may be None or empty string depending on env — both are falsy
+    assert not s.base_url
 
 
 def test_webhook_mode_requires_https(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -37,7 +41,9 @@ def test_webhook_mode_requires_scheduler_token(
 ) -> None:
     monkeypatch.setenv("MODE", "webhook")
     monkeypatch.setenv("BASE_URL", "https://foo.run.app")
-    monkeypatch.delenv("SCHEDULER_AUTH_TOKEN", raising=False)
+    # Set empty string — delenv alone is not enough because pydantic-settings
+    # falls back to .env file values.
+    monkeypatch.setenv("SCHEDULER_AUTH_TOKEN", "")
     get_settings.cache_clear()
     with pytest.raises(ValueError, match="SCHEDULER_AUTH_TOKEN"):
         get_settings()
