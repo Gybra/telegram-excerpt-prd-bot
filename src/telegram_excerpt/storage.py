@@ -48,7 +48,9 @@ class FirestoreStorage:
 
     async def close(self) -> None:
         """Close the Firestore client (to be called at shutdown)."""
-        await self._client.close()  # type: ignore[no-untyped-call]
+        result = self._client.close()  # type: ignore[no-untyped-call]
+        if result is not None:
+            await result
 
     # ─── Bot registry ────────────────────────────────────────────────
     def _bot_doc(self, chat_id: int) -> AsyncDocumentReference:
